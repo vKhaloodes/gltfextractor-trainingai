@@ -108,19 +108,16 @@ bpy
 
 ### 3) استخراج بسيط من GLTF → JSON
 
-`src/extractor.py`
+`main.py`
 
 ### 4) التطبيع والتوحيد
 
-`src/normalizer.py`
+`Normalizer/normalizer.py`
 
 
-### 5) التدريب (WGAN‑GP)
+### 5) التدريب (WGAN‑GP) والتوليد
 
-`src/train.py`
-### 6) التوليد بعد التدريب
-
-`src/generate.py`
+`train.py`
 
 ### 7) أوامر التشغيل السريعة
 
@@ -129,17 +126,14 @@ bpy
 pip install -r requirements.txt
 
 # 2) استخراج GLTF → JSON (raw)
-python src/extractor.py
+python main.py
 
 # 3) التطبيع والتوحيد
-python src/normalizer.py
-python src/unifier.py
+python Normalizer/normalizer.py
+python autounifier/unifier.py
 
-# 4) التدريب
-python src/train_wgan_gp.py
-
-# 5) التوليد
-python src/generate.py
+# 4) التدريب والتوليد
+python train.py
 ```
 
 ---
@@ -197,6 +191,7 @@ python src/generate.py
 
 * **التطوير**: خالد الزهراني – CAKHALED
 * **الفكرة والبنية**: مستوحاة من ممارسات أبحاث 3D ML الحديثة (PointNet/WGAN‑GP)
+
 
 
 
