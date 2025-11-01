@@ -117,15 +117,10 @@ bpy
 
 ### 5) التدريب (WGAN‑GP)
 
-`src/train_wgan_gp.py`
-# أعِد استخدام كودك الحالي للتدريب كما هو تقريبًا، مع ضبط المسارات إلى data/ و model/
-# يُنصح بتحديد Z_DIM و TARGET_POINTS بما يتماشى مع normalizer/extractor
-
+`src/train.py`
 ### 6) التوليد بعد التدريب
 
 `src/generate.py`
-python
-# أعِد استخدام دالة التوليد لديك (load_state_dict → z → G(z) → حفظ JSON/PNG)
 
 ### 7) أوامر التشغيل السريعة
 
@@ -202,5 +197,6 @@ python src/generate.py
 
 * **التطوير**: خالد الزهراني – CAKHALED
 * **الفكرة والبنية**: مستوحاة من ممارسات أبحاث 3D ML الحديثة (PointNet/WGAN‑GP)
+
 
 
