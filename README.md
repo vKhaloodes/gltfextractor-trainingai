@@ -110,126 +110,12 @@ bpy
 
 `src/extractor.py`
 
-```python
-from pathlib import Path
-import json
-import numpy as np
-import trimesh
-
-IN_DIR = Path("gltf/inputs")
-OUT_DIR = Path("data/raw")
-OUT_DIR.mkdir(parents=True, exist_ok=True)
-
-
-def mesh_to_point_cloud(mesh: trimesh.Trimesh, target_points=2048):
-    # أخذ نقاط من السطح (sampling) إن لم تكن vertices كافية أو متوازنة
-    if hasattr(mesh, 'sample'):
-        pts = mesh.sample(target_points)
-    else:
-        # fallback على vertices (قد تكون أقل جودة كتوزيع)
-        pts = mesh.vertices
-        if pts.shape[0] > target_points:
-            idx = np.random.choice(pts.shape[0], target_points, replace=False)
-            pts = pts[idx]
-        elif pts.shape[0] < target_points:
-            extra = np.random.choice(pts.shape[0], target_points - pts.shape[0], replace=True)
-            pts = np.vstack([pts, pts[extra]])
-    return pts.astype(np.float32)
-
-
-def process_file(path: Path, target_points=2048):
-    scene = trimesh.load(path, force='scene')
-    pts_all = []
-    for name, geom in scene.geometry.items():
-        if isinstance(geom, trimesh.Trimesh):
-            pts = mesh_to_point_cloud(geom, target_points=target_points)
-            pts_all.append(pts)
-    if not pts_all:
-        return None
-    pts = np.concatenate(pts_all, axis=0)
-    # إعادة أخذ عيّنة أخيرة للوصول لعدد نقاط موحد
-    if pts.shape[0] != target_points:
-        idx = np.random.choice(pts.shape[0], target_points, replace=True)
-        pts = pts[idx]
-    return {"vertices": pts.tolist()}
-
-
-def main():
-    for f in IN_DIR.glob("*.gltf"):
-        obj = process_file(f, target_points=2048)
-        if obj is None:
-            print(f"[!] No mesh in {f}")
-            continue
-        out = OUT_DIR / (f.stem + ".json")
-        with open(out, "w", encoding="utf-8") as fp:
-            json.dump(obj, fp, ensure_ascii=False, indent=2)
-        print(f"[OK] → {out}")
-
-if __name__ == "__main__":
-    main()
 ```
 
 ### 4) التطبيع والتوحيد
 
 `src/normalizer.py`
 
-```python
-from pathlib import Path
-import json
-import numpy as np
-
-RAW_DIR = Path("data/raw")
-NORM_DIR = Path("data/norm")
-NORM_DIR.mkdir(parents=True, exist_ok=True)
-TARGET_POINTS = 2048
-
-
-def normalize_unit_cube(pts: np.ndarray):
-    # إزاحة لمركز الكتلة ثم تحجيم ليكون ضمن [-1,1]
-    cen = pts.mean(axis=0, keepdims=True)
-    pts = pts - cen
-    scale = np.abs(pts).max()
-    if scale > 0:
-        pts = pts / scale
-    return pts
-
-for f in RAW_DIR.glob("*.json"):
-    with open(f, "r", encoding="utf-8") as fp:
-        data = json.load(fp)
-    pts = np.array(data["vertices"], dtype=np.float32)
-    # تأكيد عدد النقاط
-    if pts.shape[0] != TARGET_POINTS:
-        idx = np.random.choice(pts.shape[0], TARGET_POINTS, replace=True)
-        pts = pts[idx]
-    pts = normalize_unit_cube(pts)
-    out = NORM_DIR / f.name
-    with open(out, "w", encoding="utf-8") as fp:
-        json.dump({"vertices": pts.tolist()}, fp, ensure_ascii=False, indent=2)
-    print("[OK] →", out)
-```
-
-`src/unifier.py`
-
-```python
-from pathlib import Path
-import json
-
-NORM_DIR = Path("data/norm")
-OUT_DIR = Path("data")
-OUT_DIR.mkdir(parents=True, exist_ok=True)
-
-# ببساطة انسخ/تحقق؛ في نسخة MVP نفترض جميع الملفات موحّدة
-for f in NORM_DIR.glob("*.json"):
-    with open(f, "r", encoding="utf-8") as fp:
-        d = json.load(fp)
-    if "vertices" not in d or not isinstance(d["vertices"], list):
-        print("[SKIP] invalid:", f)
-        continue
-    out = OUT_DIR / f.name
-    with open(out, "w", encoding="utf-8") as fo:
-        json.dump(d, fo, ensure_ascii=False, indent=2)
-    print("[OK] unified →", out)
-```
 
 ### 5) التدريب (WGAN‑GP)
 
@@ -323,3 +209,4 @@ python src/generate.py
 
 * **التطوير**: خالد الزهراني – CAKHALED
 * **الفكرة والبنية**: مستوحاة من ممارسات أبحاث 3D ML الحديثة (PointNet/WGAN‑GP)
+
